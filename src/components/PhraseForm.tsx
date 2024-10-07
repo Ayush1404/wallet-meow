@@ -6,19 +6,16 @@ import { Button } from "./ui/button";
 import { Copy, Shuffle, Sparkles } from "lucide-react";
 import { toast } from "react-toastify";
 import { Buffer } from 'buffer';
-import { generateMnemonic, mnemonicToSeedSync } from "bip39";
-
+import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from "bip39";
 
 // Set Buffer globally
 if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-
 const PhraseForm = () => {
   const [phrase, setPhrase] = useRecoilState(phraseAtom);
   const [curr, setCurr] = useState(0);
-  
 
   // Create a ref to store the input elements and define the correct type
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -62,14 +59,33 @@ const PhraseForm = () => {
     });
   };
 
-  const handleGenerateRandom = () =>{
+  const handleGenerateRandom = () => {
     const mnemonic = generateMnemonic();
     const seed = mnemonicToSeedSync(mnemonic);
-    setPhrase((prev)=>({
-      phrase:mnemonic.split(' '),
+    setPhrase({
+      phrase: mnemonic.split(' '),
       seed
-    }))
-  }
+    });
+  };
+
+  const handleGenerate = () => {
+    const currentPhrase = phrase.phrase.join(' ');
+
+    // Validate the entered phrase
+    if (!validateMnemonic(currentPhrase)) {
+      toast.error("Invalid mnemonic phrase. Please check and try again.");
+      return;
+    }
+
+    // If valid, generate the seed and update the state
+    const seed = mnemonicToSeedSync(currentPhrase);
+    setPhrase((prev) => ({
+      ...prev,
+      seed
+    }));
+
+    toast.success("Seed successfully generated from the phrase!");
+  };
 
   return (
     <div>
@@ -110,18 +126,19 @@ const PhraseForm = () => {
 
       <div className="flex flex-row-reverse">
         <Button
-            className="text-xs text-slate-400 hover:bg-white"
-            onClick={handleCopy}
-            variant='ghost'
+          className="text-xs text-slate-400 hover:bg-white"
+          onClick={handleCopy}
+          variant='ghost'
         >
-            <Copy size={16}/> 
-            <p className="ml-2">Copy Phrase</p>
+          <Copy size={16}/> 
+          <p className="ml-2">Copy Phrase</p>
         </Button>
       </div>
 
       <div className="flex flex-col gap-4 mt-8">
         <Button 
           className="w-full"
+          onClick={handleGenerate}
         >
           <Sparkles size={16} />
           <p className="ml-2">Generate</p>
@@ -132,7 +149,7 @@ const PhraseForm = () => {
           onClick={handleGenerateRandom}
         >
           <Shuffle size={16} />
-          <p className="ml-2">Generate random</p>
+          <p className="ml-2">Generate Random</p>
         </Button>
       </div>
       
