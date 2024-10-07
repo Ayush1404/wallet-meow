@@ -2,13 +2,23 @@ import { Input } from "./ui/input";
 import phraseAtom from "@/store/PhraseAtom";
 import { useState, useEffect, useRef } from "react";
 import { useRecoilState } from "recoil";
-import { Button } from "./ui/button"; // Import your button component if needed
-import { Copy } from "lucide-react";
+import { Button } from "./ui/button"; 
+import { Copy, Shuffle, Sparkles } from "lucide-react";
 import { toast } from "react-toastify";
+import { Buffer } from 'buffer';
+import { generateMnemonic, mnemonicToSeedSync } from "bip39";
+
+
+// Set Buffer globally
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+}
+
 
 const PhraseForm = () => {
   const [phrase, setPhrase] = useRecoilState(phraseAtom);
   const [curr, setCurr] = useState(0);
+  
 
   // Create a ref to store the input elements and define the correct type
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -51,6 +61,15 @@ const PhraseForm = () => {
       console.error("Failed to copy: ", err); // Handle any errors
     });
   };
+
+  const handleGenerateRandom = () =>{
+    const mnemonic = generateMnemonic();
+    const seed = mnemonicToSeedSync(mnemonic);
+    setPhrase((prev)=>({
+      phrase:mnemonic.split(' '),
+      seed
+    }))
+  }
 
   return (
     <div>
@@ -97,6 +116,23 @@ const PhraseForm = () => {
         >
             <Copy size={16}/> 
             <p className="ml-2">Copy Phrase</p>
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-4 mt-8">
+        <Button 
+          className="w-full"
+        >
+          <Sparkles size={16} />
+          <p className="ml-2">Generate</p>
+        </Button>
+        <Button 
+          className="w-full"
+          variant='outline'
+          onClick={handleGenerateRandom}
+        >
+          <Shuffle size={16} />
+          <p className="ml-2">Generate random</p>
         </Button>
       </div>
       
